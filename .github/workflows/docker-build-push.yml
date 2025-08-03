@@ -1,0 +1,50 @@
+name: Build and Push to Docker Hub
+
+on:
+  push:
+    branches:
+      - main   # Trigger only on pushes to main branch
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest   # GitHub-hosted Ubuntu runner
+
+    steps:
+      # Checkout your repository code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up Python (so we can install requirements before building image)
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      # Install Python dependencies (requirements.txt)
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Log in to Docker Hub (using username + access token as password)
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Build Docker image with 2 tags: latest + commit SHA
+      - name: Build Docker Image
+        run: |
+          IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/my-app
+          GIT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          docker build -t $IMAGE_NAME:latest -t $IMAGE_NAME:$GIT_SHA .
+
+      # Push both tags
+      - name: Push Docker Image
+        run: |
+          IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/my-app
+          GIT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          docker push $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:$GIT_SHA
+
