@@ -15,22 +15,19 @@ class IrisInput(BaseModel):
 
 app = FastAPI(title="ML Inference API")
 
-# Prometheus metrics
-REQUEST_COUNT = Counter('api_requests_total', 'Total number of prediction requests')
-PREDICTION_COUNTER = Counter('model_predictions_total', 'Total predictions made', ['pclass'])
-REQUEST_LATENCY = Histogram('api_request_latency_seconds', 'Request latency in seconds')
+# Prometheus indicators
+REQUEST_LAG= Histogram('api_request_latency_seconds', 'Request latency in seconds')
 VALIDATION_ERRORS = Counter('validation_errors_total', 'Total number of validation errors')
-MODEL_LOAD_SUCCESS = Counter('model_load_success_total', 'Model load succeeded')
-MODEL_LOAD_FAILURE = Counter('model_load_failure_total', 'Model load failed')
-DB_INSERT_FAILURES = Counter('db_insert_failures_total', 'DB insert failures during logging')
+MODEL_READY_SUCCESS = Counter('model_load_success', 'Model loaded')
+MODEL_FAILED= Counter('model_load_failured', 'Model load failed')
 
 # Load the best model from the "model" folder
 model_path = os.path.join("model", "Logistic_Regression_best_model.pkl")
 try:
     model = joblib.load(model_path)
-    MODEL_LOAD_SUCCESS.inc()
+    MODEL_READY_SUCCESS.inc()
 except Exception:
-    MODEL_LOAD_FAILURE.inc()
+    MODEL_FAILED.inc()
     raise
 
 # Create SQLite DB (in-memory or use a file like 'logs.db')
@@ -50,11 +47,9 @@ db_lock = threading.Lock()
 @app.post("/predict")
 async def predict(input_data: IrisInput, request: Request):
     start_time = request.state.start_time if hasattr(request.state, "start_time") else None
-    REQUEST_COUNT.inc()
     try:
         features = input_data.features
         prediction = model.predict([features])[0]
-        PREDICTION_COUNTER.labels(pclass=str(prediction)).inc()
         # Log to DB
         with db_lock:
             cursor.execute(
@@ -70,11 +65,10 @@ async def predict(input_data: IrisInput, request: Request):
             content={"validation_error": ve.errors()}
         )
     except Exception as db_error:
-        DB_INSERT_FAILURES.inc()
         raise HTTPException(status_code=500, detail=str(db_error))
     finally:
         if start_time:
-            REQUEST_LATENCY.observe(time() - start_time)
+            REQUEST_LAG.observe(time() - start_time)
 
 @app.get("/metrics")
 async def metrics():
