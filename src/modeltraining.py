@@ -11,7 +11,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 import joblib
 
 def main():
-    # -------- 1. Load Data --------
+    # -------- 1. Load Data --------python- modeltraining.py
     #iris = load_iris()
     file_path = 'data/Iris_dataset.csv'
     df = pd.read_csv(file_path)
@@ -24,11 +24,12 @@ def main():
 
     #Encode target labels
     label_encoder = LabelEncoder()
-    df['target'] = label_encoder.fit_transform(df['Species'])
+
+    df['target'] = label_encoder.fit_transform(df[' Species'])
 
     # Split features and labels
     
-    X = df[["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]]
+    X = df[[" SepalLengthCm", " SepalWidthCm", " PetalLengthCm", " PetalWidthCm"]]
     y = df["target"]
 
     X_train, X_test, y_train, y_test = train_test_split(
@@ -65,6 +66,7 @@ def main():
         
     ## Random Forest
     with mlflow.start_run(run_name="Random_Forest") as run:
+
         
             rf = RandomForestClassifier(n_estimators=100, max_depth=4, random_state=42)
             rf.fit(X_train, y_train)
