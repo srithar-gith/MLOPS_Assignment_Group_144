@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 7000
 COPY . .
 #CMD ["python", "api/inference.py"]
-CMD ["univcorn", "api.inference.app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "api.inference.app", "--host", "0.0.0.0", "--port", "8000"]
