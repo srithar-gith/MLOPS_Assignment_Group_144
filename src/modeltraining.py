@@ -17,7 +17,7 @@ def main():
     df = pd.read_csv(file_path)
 
     # 
-    # -------- 2. Data Preprocessing --------
+    # -------- 2. Data Preprocessing ---------
 
     #Drop any missing rows (optional, if your file is clean, this has no effect)
     df.dropna(inplace=True)
