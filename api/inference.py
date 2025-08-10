@@ -15,7 +15,7 @@ class IrisInput(BaseModel):
 
 app = FastAPI(title="ML Inference API")
 
-# Prometheus indicators
+# Prometheus indicators demo checkin
 REQUEST_LAG= Histogram('api_request_latency_seconds', 'Request latency in seconds')
 VALIDATION_ERRORS = Counter('validation_errors_total', 'Total number of validation errors')
 MODEL_READY_SUCCESS = Counter('model_load_success', 'Model loaded')
